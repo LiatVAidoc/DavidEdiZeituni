@@ -45,8 +45,9 @@
               </thead>
               <tbody>
                 <!-- To be implemented by candidate -->
-                <tr>
-                  <td colspan="2">Metadata will be displayed here</td>
+                <tr v-for="(value, key) in metadata" :key="key">
+                  <td>{{ key }}</td>
+                  <td>{{ value }}</td>
                 </tr>
               </tbody>
             </v-table>
