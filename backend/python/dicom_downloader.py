@@ -1,7 +1,12 @@
 import boto3
 import json
+import os
 
-with open('secrets.json') as r:
+# Get the directory of the current script and build path to secrets.json
+current_dir = os.path.dirname(os.path.abspath(__file__))
+secrets_path = os.path.join(current_dir, 'keys', 'secrets.json')
+
+with open(secrets_path) as r:
     aws_secrets = json.loads(r.read())  
 
 class S3DicomDownloader:
@@ -19,5 +24,17 @@ class S3DicomDownloader:
         - s3_path: The S3 object path (e.g., 'BUCKET_NAME/folder/subfolder/dicomfile.dcm').
         - local_file_path: The local file path to save the DICOM file (e.g., '/local/path/dicomfile.dcm').
         """
-        raise NotImplementedError
+        # Parse bucket name and key from s3_path
+        if '/' not in s3_path:
+            raise ValueError("Invalid S3 path format. Expected format: 'bucket_name/key'")
+        
+        parts = s3_path.split('/', 1)
+        bucket_name = parts[0]
+        key = parts[1]
+        
+        try:
+            # Download file from S3
+            self.s3.download_file(bucket_name, key, local_file_path)
+        except Exception as e:
+            raise Exception(f"Failed to download DICOM file from S3: {str(e)}")
 
