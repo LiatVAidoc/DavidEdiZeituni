@@ -67,7 +67,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import ApiService from './services/api.js';
 
 export default {
   name: 'App',
@@ -81,8 +81,23 @@ export default {
   },
   methods: {
     async fetchDicomMetadata() {
-      // To be implemented by candidate
-      this.error = 'Not implemented yet';
+      if (!this.s3Path) {
+        this.error = 'Please enter a valid S3 path';
+        return;
+      }
+
+      this.loading = true;
+      this.error = null;
+      this.metadata = null;
+
+      try {
+        this.metadata = await ApiService.fetchDicomMetadata(this.s3Path);
+      } catch (error) {
+        console.error('Error fetching DICOM metadata:', error);
+        this.error = error.response?.data?.error || 'Failed to fetch DICOM metadata. Please check the S3 path and try again.';
+      } finally {
+        this.loading = false;
+      }
     }
   }
 };
