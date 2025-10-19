@@ -11,8 +11,16 @@ from services.dicom_parser import DicomParser
 class DicomService:
     """Service responsible for DICOM file operations"""
     
-    def __init__(self):
-        self.downloader = S3DicomDownloader()
+    def __init__(self, downloader=None, parser=None):
+        """
+        Initialize DICOM service with dependency injection support
+        
+        Args:
+            downloader: DICOM downloader instance (defaults to S3DicomDownloader)
+            parser: DICOM parser instance (defaults to DicomParser)
+        """
+        self.downloader = downloader if downloader is not None else S3DicomDownloader()
+        self.parser = parser if parser is not None else DicomParser()
     
     def get_metadata_from_s3(self, file_path):
         """
@@ -36,7 +44,7 @@ class DicomService:
             self.downloader.download_dicom_file(file_path, temp_file_path)
             
             # Parse metadata from downloaded file
-            metadata = DicomParser.parse_metadata(temp_file_path)
+            metadata = self.parser.parse_metadata(temp_file_path)
             
             return metadata
             

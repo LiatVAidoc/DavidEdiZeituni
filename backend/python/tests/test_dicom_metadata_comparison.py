@@ -11,6 +11,8 @@ import pytest
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from services.dicom_service import DicomService
+from services.s3_dicom_downloader import S3DicomDownloader
+from services.dicom_parser import DicomParser
 
 
 class TestDicomFileComparison:
@@ -19,7 +21,9 @@ class TestDicomFileComparison:
     @classmethod
     def setup_class(cls):
         """Set up test fixtures for the class"""
-        cls.dicom_service = DicomService()
+        downloader = S3DicomDownloader()
+        parser = DicomParser()
+        cls.dicom_service = DicomService(downloader=downloader, parser=parser)
         cls.test_file_path = "aidoc-dev-us-102-storage/production/scans/3041983076-1.2.826.0.1.3680043.9.6883.1.24209659964804056971019414433891120/anon-1.2.826.0.1.3680043.9.6883.1.11587754842360809093846306686786710.dcm"
         
         # Load expected results
