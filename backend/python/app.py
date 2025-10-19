@@ -1,58 +1,58 @@
-from flask import Flask, request, jsonify
+"""
+Flask Application - Main entry point
+Responsible only for application configuration and route registration
+"""
+from flask import Flask, request
 from flask_cors import CORS
-from dicom_parser import DicomParser
-from dicom_downloader import S3DicomDownloader
-import os
-import tempfile
+from controllers.health_controller import HealthController
+from controllers.dicom_controller import DicomController
 
+# Initialize Flask app
 app = Flask(__name__)
 
-# Configure CORS to allow requests from localhost
-CORS(app, origins=[
-    "http://localhost:3000",  # React default port
-    "http://localhost:8080"  # Vue default port
-])
+# Configure CORS to allow requests from localhost and common development ports
+CORS(app, 
+     origins=[
+         "http://localhost:3000",    # React default port
+         "http://localhost:8080",    # Vue default port
+         "http://127.0.0.1:3000",    # React with 127.0.0.1
+         "http://127.0.0.1:8080",    # Vue with 127.0.0.1
+         "http://localhost:8081",    # Alternative Vue port
+         "http://127.0.0.1:8081",    # Alternative Vue port with 127.0.0.1
+         "http://localhost:5173",    # Vite default port
+         "http://127.0.0.1:5173",    # Vite with 127.0.0.1
+         "http://localhost:4173",    # Vite preview port
+         "http://127.0.0.1:4173"     # Vite preview with 127.0.0.1
+     ],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+     allow_headers=['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+     supports_credentials=True,
+     send_wildcard=False)
 
+# Initialize controllers
+health_controller = HealthController()
+dicom_controller = DicomController()
+
+# Route definitions
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({"message": "The server is running"}), 200
+    """Health check endpoint"""
+    return health_controller.health_check()
 
-# /api/dicom-metadata
-# Accepts POST requests with an S3 path in the request body
-# Downloads the DICOM file from the provided S3 path
-# Extracts metadata using the appropriate DICOM library
-# Returns the metadata as JSON
-@app.route('/api/dicom-metadata', methods=['POST'])
+@app.route('/api/dicom-metadata', methods=['POST', 'OPTIONS'])
 def dicom_metadata():
-    try:
-        # Get the file_path from request JSON
-        data = request.get_json()
-        if not data or 'file_path' not in data:
-            return jsonify({"error": "file_path is required in request body"}), 400
-        
-        file_path = data['file_path']
-        
-        # Create temporary file for downloaded DICOM
-        with tempfile.NamedTemporaryFile(suffix='.dcm', delete=False) as temp_file:
-            temp_file_path = temp_file.name
-        
-        try:
-            # Download DICOM file from S3
-            downloader = S3DicomDownloader()
-            downloader.download_dicom_file(file_path, temp_file_path)
-            
-            # Parse metadata from downloaded file
-            metadata = DicomParser.parse_metadata(temp_file_path)
-            
-            return jsonify(metadata), 200
-            
-        finally:
-            # Clean up temporary file
-            if os.path.exists(temp_file_path):
-                os.unlink(temp_file_path)
-                
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    """
+    DICOM metadata extraction endpoint
+    
+    Accepts POST requests with an S3 path in the request body
+    Downloads the DICOM file from the provided S3 path
+    Extracts metadata using the appropriate DICOM library
+    Returns the metadata as JSON
+    """
+    if request.method == 'OPTIONS':
+        # Handle preflight request
+        return '', 200
+    return dicom_controller.get_dicom_metadata()
 
 if __name__ == '__main__':
     app.run(debug=True)

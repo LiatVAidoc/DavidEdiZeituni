@@ -4,7 +4,9 @@ import os
 
 # Get the directory of the current script and build path to secrets.json
 current_dir = os.path.dirname(os.path.abspath(__file__))
-secrets_path = os.path.join(current_dir, 'keys', 'secrets.json')
+# Go up one level from services/ to reach the root python directory
+parent_dir = os.path.dirname(current_dir)
+secrets_path = os.path.join(parent_dir, 'keys', 'secrets.json')
 
 with open(secrets_path) as r:
     aws_secrets = json.loads(r.read())  
