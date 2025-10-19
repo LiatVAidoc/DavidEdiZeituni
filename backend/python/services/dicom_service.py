@@ -4,7 +4,7 @@ Combines downloading and metadata parsing functionality
 """
 import os
 import tempfile
-from services.dicom_downloader import S3DicomDownloader
+from services.s3_dicom_downloader import S3DicomDownloader
 from services.dicom_parser import DicomParser
 
 
